@@ -17,6 +17,7 @@ Before deploying this stack, ensure you have:
 2. AWS CLI installed and configured
 3. Necessary permissions to create the specified AWS resources
 
+
 ## Deployment Steps (AWS Management Console)
 
 1. Sign in to the AWS Management Console.
@@ -58,27 +59,6 @@ Before deploying this stack, ensure you have:
 
 Remember to delete the stack when you no longer need these resources to avoid unnecessary charges.
 
-## Deployment Steps(Using AWS CLI)
-
-1. Clone this repository:
-    ```
-       git clone https://github.com/felooh/stunning-chainsaw-cloudFormation.git
-    ```
-
-2. Navigate to the project directory:
-    ```
-        cd stunning-chainsaw-cloudformation
-    ```
-
-3. Deploy the CloudFormation stack:
-    ```
-        aws cloudformation create-stack --stack-name [your-stack-name] --template-body file://template.yaml --capabilities CAPABILITY_IAM
-    ```
-
-4. Monitor the stack creation process:
-    ```
-        aws cloudformation describe-stacks --stack-name [your-stack-name]
-    ```
 
 ## Stack Configuration
 
@@ -90,6 +70,18 @@ Remember to delete the stack when you no longer need these resources to avoid un
 - Maximum: 3 instances
 - Security Group: Allows RDP access (port 3389)
 - S3 Bucket: Created for storage purposes
+
+## Screenshots
+   - Overview Stack status
+   ![Alt text](/screenshots/overview.png?raw=true "Optional Title")
+
+    - Resources Status
+   ![Alt text](/screenshots/resources.png?raw=true "Optional Title")
+
+    - You may also use the cloud formation composer to visualize your stack before deployment
+   ![Alt text](/screenshots/cf_composer.png?raw=true "Optional Title")
+
+
 
 ## Accessing EC2 Instances
 
@@ -116,3 +108,4 @@ To avoid ongoing charges, delete the stack when no longer needed:
 ## Support
 
 For issues or questions, please open an issue in this repository.
+
