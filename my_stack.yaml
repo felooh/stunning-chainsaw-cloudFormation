@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: AWS CloudFormation template to set up a VPC, Auto-scaling Group with Windows EC2 instances, Security Group, S3 Bucket, and required outputs.
+Description: AWS CloudFormation template to set up a VPC, Auto-scaling Group with Windows EC2 instances, Security Group, S3 Bucket, IAM Role, and required outputs.
 
 Resources:
   # VPC
@@ -98,62 +98,71 @@ Resources:
         - Key: Name
           Value: Skillsync-Windows-SG
 
+  # IAM Role for S3 Access
+  InstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:ListBucket'
+                  - 's3:GetObject'
+                  - 's3:PutObject'
+                Resource:
+                  - !Sub 'arn:aws:s3:::skillsync-project-storage'
+                  - !Sub 'arn:aws:s3:::skillsync-project-storage/*'
+
+  # Instance Profile for EC2 Instances
+  InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  # S3 Bucket
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: skillsync-project-storage
+
   # Launch Template for Windows Instances
   LaunchTemplate:
     Type: 'AWS::EC2::LaunchTemplate'
     Properties:
       LaunchTemplateName: Skillsync-Windows-LaunchTemplate
       LaunchTemplateData:
-        ImageId: ami-07d9456e59793a7d5
+        ImageId: ami-07d9456e59793a7d5 # Windows Server 2019 Base AMI (example)
         InstanceType: t2.micro
         SecurityGroupIds:
           - !Ref SG
         KeyName: skillstest
+        IamInstanceProfile:
+          Arn: !GetAtt InstanceProfile.Arn
         UserData:
           Fn::Base64: |
             <powershell>
-            # Set up S3 tools or any necessary configurations here
+            # Install AWS CLI
+            Invoke-WebRequest "https://awscli.amazonaws.com/AWSCLIV2.msi" -OutFile "AWSCLIV2.msi"
+            Start-Process msiexec.exe -ArgumentList '/i AWSCLIV2.msi /quiet' -Wait
+
+            # Download a file from the S3 bucket
+            aws s3 cp s3://skillsync-project-storage/sample-file.txt C:\sample-file.txt
+
+            # Optionally, upload a file to the S3 bucket
+            echo "Instance setup complete" > C:\setup-log.txt
+            aws s3 cp C:\setup-log.txt s3://skillsync-project-storage/setup-log.txt
             </powershell>
-
-  # Application Load Balancer (Optional if you want to include it)
-  ALB:
-    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
-    Properties:
-      Subnets:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
-      SecurityGroups:
-        - !Ref SG
-      LoadBalancerAttributes:
-        - Key: idle_timeout.timeout_seconds
-          Value: '60'
-      Scheme: internet-facing
-      Type: application
-
-  # ALB Listener (Optional)
-  ALBListener:
-    Type: 'AWS::ElasticLoadBalancingV2::Listener'
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
-      LoadBalancerArn: !Ref ALB
-      Port: 80
-      Protocol: HTTP
-
-  # ALB Target Group (Optional)
-  ALBTargetGroup:
-    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
-    Properties:
-      Port: 80
-      Protocol: HTTP
-      VpcId: !Ref VPC
-      HealthCheckIntervalSeconds: 30
-      HealthCheckPath: /
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
-      UnhealthyThresholdCount: 2
-      HealthyThresholdCount: 2
 
   # Auto-scaling Group
   AutoScalingGroup:
@@ -172,22 +181,8 @@ Resources:
         - Key: Name
           Value: Skillsync-Windows-ASG
           PropagateAtLaunch: true
-      TargetGroupARNs: 
-        - !Ref ALBTargetGroup # Optional if you're using ALB
-      HealthCheckType: EC2
-      HealthCheckGracePeriod: 300
-
-  # S3 Bucket
-  S3Bucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: skillsync-project-storage
 
 Outputs:
-  ALBDNSName:
-    Description: 'The DNS name of the Application Load Balancer'
-    Value: !GetAtt ALB.DNSName
-
   AutoScalingGroupName:
     Description: 'The name of the Auto Scaling Group'
     Value: !Ref AutoScalingGroup
