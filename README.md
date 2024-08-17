@@ -75,10 +75,10 @@ Remember to delete the stack when you no longer need these resources to avoid un
    - Overview Stack status
    ![Alt text](/screenshots/overview.png?raw=true "Optional Title")
 
-    - Resources Status
+   - Resources Status
    ![Alt text](/screenshots/resources.png?raw=true "Optional Title")
 
-    - You may also use the cloud formation composer to visualize your stack before deployment
+   - You may also use the cloud formation composer to visualize your stack before deployment
    ![Alt text](/screenshots/cf_composer.png?raw=true "Optional Title")
 
 
