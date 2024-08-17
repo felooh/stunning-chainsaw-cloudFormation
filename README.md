@@ -22,7 +22,7 @@ Before deploying this stack, ensure you have:
 1. Clone this repository:
     ```
         git clone [repository-url]
-
+    ```
 
 2. Navigate to the project directory:
 
